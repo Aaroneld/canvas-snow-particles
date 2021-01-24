@@ -1,0 +1,15 @@
+body {
+    background: red;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+}
+
+canvas {
+    width: inherit;
+    height: inherit;
+}
+
+
+/*# sourceMappingURL=/canvas-snow-particles.9ad09f98.css.map */
