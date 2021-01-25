@@ -120,6 +120,12 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 })({"index.js":[function(require,module,exports) {
 var canvas = document.querySelector("canvas");
 var ctx = canvas.getContext("2d");
+var MousePos = [Infinity, Infinity];
+var DISPLACEMENT_FORCE_MAX = 2;
+canvas.addEventListener("mousemove", function (e) {
+  // console.log(MousePos);
+  MousePos = [e.clientX, e.clientY];
+});
 bRect = canvas.getBoundingClientRect();
 canvas.width = bRect.width;
 canvas.height = bRect.height;
@@ -147,8 +153,38 @@ function createParticle() {
   return {
     x: ~~(Math.random() * canvas.width),
     y: -~~(Math.random() * canvas.height),
-    windValue: returnRandomWindValue()
+    windValue: returnRandomWindValue(),
+    displacementVectorX: 0,
+    displacementVectorY: 0,
+    celeration: "NONE"
   };
+}
+
+function checkIfInMouseRange() {
+  var particle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+  if (Math.abs(particle.x - MousePos[0]) <= 10 && Math.abs(particle.y - MousePos[1]) <= 10) {
+    particle.displacementVectorX = particle.x - MousePos[0] <= 0 ? -1 : 1;
+    particle.displacementVectorY = particle.y - MousePos[1] <= 0 ? -1 : 1;
+    particle.celeration = "INCREASING";
+  }
+}
+
+function rectifyCeleration(value, particle) {
+  if (value > 0.5 || value < -0.5) {
+    if (particle.celeration === "INCREASING") {
+      var _changedValue = value < 0 ? -(Math.abs(value) + 0.2 / 10 * DISPLACEMENT_FORCE_MAX) : Math.abs(value) + 0.2 / 10 * DISPLACEMENT_FORCE_MAX;
+
+      if (Math.abs(_changedValue) > DISPLACEMENT_FORCE_MAX) particle.celeration = "DECREASING";
+      return _changedValue;
+    }
+
+    var changedValue = value < 0 ? -(Math.abs(value) - 0.5 / 200 * DISPLACEMENT_FORCE_MAX) : Math.abs(value) - 0.5 / 200 * DISPLACEMENT_FORCE_MAX;
+    if (Math.abs(changedValue) < 1) particle.celeration = "NONE";
+    return changedValue;
+  }
+
+  return 0;
 }
 
 var particles = [];
@@ -170,8 +206,6 @@ for (i = 0; i < 3000; i++) {
 // }
 
 
-ctx.lineWidth = 0.2; // const simulateWind = WindMap(particles);
-
 function animation() {
   ctx.clearRect(0, 0, 5000, 5000);
   ctx.fillStyle = "white";
@@ -181,10 +215,14 @@ function animation() {
     ctx.beginPath();
     ctx.arc(particles[i].x, particles[i].y, i % 2 === 0 ? 1 : 2, 0, Math.PI * 2);
     ctx.fill();
+    checkIfInMouseRange(particles[i]);
     particles[i].y > canvas.height ? particles[i] = createParticle() : particles[i] = {
-      x: particles[i].x + particles[i].windValue,
-      y: particles[i].y + 0.5,
-      windValue: particles[i].windValue
+      x: particles[i].x + particles[i].windValue + particles[i].displacementVectorX,
+      y: particles[i].y + 0.5 + particles[i].displacementVectorY,
+      windValue: particles[i].windValue,
+      displacementVectorX: rectifyCeleration(particles[i].displacementVectorX, particles[i]),
+      displacementVectorY: rectifyCeleration(particles[i].displacementVectorY, particles[i]),
+      celeration: particles[i].celeration
     };
   } // particles = particles.map((particle, index) => {
   //     ctx.beginPath();
@@ -237,7 +275,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50569" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55390" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
