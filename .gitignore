@@ -1,3 +1,4 @@
 /.cache
 /distdist
 node_modules
+dist/*

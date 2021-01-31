@@ -1,55 +1,73 @@
 import gsap from "gsap";
 
-const canvas = document.querySelector("canvas");
-const ctx = canvas.getContext("2d");
-const tree = document.querySelector(".tree");
+const DISPLACEMENT_FORCE_MAX = 2;
+let MousePos = [Infinity, Infinity];
 
-gsap.set(".tree, .tree-2", {
-    transformOrigin: "50% 100%",
-    rotate: -90,
-    scaleX: 0.05,
-    scale: 0.3,
-    y: 20,
-});
+function main() {
+    const canvas = document.querySelector("canvas");
+    const ctx = canvas.getContext("2d");
 
-gsap.set(".tree-2", { scaleX: 0.6, y: 200 });
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 1;
 
-window.onload = () => {
-    gsap.to(".tree", {
-        delay: 3,
-        rotate: -3,
-        scaleX: 1,
-        scaleY: 0.9,
-        y: 0,
-        duration: 3,
+    window.addEventListener("mousemove", (e) => {
+        MousePos = [e.clientX, e.clientY];
     });
-    gsap.to(".tree", { delay: 4, scaleY: 1, duration: 4 });
 
-    gsap.to(".tree-2", {
-        delay: 5,
-        rotate: 3,
-        scaleX: 0.7,
-        scaleY: 0.9,
-        y: 0,
-        duration: 3,
-    });
-    gsap.to(".tree-2", { delay: 7, scaleY: 0.9, duration: 4 });
+    setStage();
+    setSize(canvas);
+    const buffer = createCanvasBuffer(canvas);
+    let particles = initializeParticles(canvas);
+
+    animation(ctx, canvas, particles, buffer);
+}
+
+const createCanvasBuffer = (canvas) => {
+    canvas.canvasBuffer = document.createElement("canvas");
+    canvas.canvasBuffer.height = canvas.height;
+    canvas.canvasBuffer.width = canvas.width;
+    return canvas.canvasBuffer.getContext("2d");
 };
 
-let MousePos = [Infinity, Infinity];
-const DISPLACEMENT_FORCE_MAX = 2;
-window.addEventListener("mousemove", (e) => {
-    console.log(MousePos);
-    MousePos = [e.clientX, e.clientY];
-});
+const setStage = () => {
+    gsap.set(".tree, .tree-2", {
+        transformOrigin: "50% 100%",
+        rotate: -90,
+        scaleX: 0.05,
+        scale: 0.3,
+        y: 20,
+    });
 
-const bRect = canvas.getBoundingClientRect();
-canvas.width = bRect.width;
-canvas.height = bRect.height;
+    gsap.set(".tree-2", { scaleX: 0.6, y: 200 });
 
-console.log(ctx);
-console.log(canvas.width);
-ctx.fillStyle = "#ffffff";
+    window.onload = () => {
+        gsap.to(".tree", {
+            delay: 3,
+            rotate: -3,
+            scaleX: 1,
+            scaleY: 0.9,
+            y: 0,
+            duration: 3,
+        });
+        gsap.to(".tree", { delay: 4, scaleY: 1, duration: 4 });
+
+        gsap.to(".tree-2", {
+            delay: 5,
+            rotate: 3,
+            scaleX: 0.7,
+            scaleY: 0.9,
+            y: 0,
+            duration: 3,
+        });
+        gsap.to(".tree-2", { delay: 7, scaleY: 0.9, duration: 4 });
+    };
+};
+
+const setSize = (canvas) => {
+    const bRect = canvas.getBoundingClientRect();
+    canvas.width = bRect.width;
+    canvas.height = bRect.height;
+};
 
 function returnRandomWindValue() {
     const RAND = Math.random();
@@ -66,7 +84,7 @@ function returnRandomWindValue() {
     }
 }
 
-function createParticle() {
+function createParticle(canvas) {
     return {
         x: ~~(Math.random() * canvas.width),
         y: -~~(Math.random() * canvas.height),
@@ -114,21 +132,22 @@ function rectifyCeleration(value, particle) {
     return 0;
 }
 
-let particles = [];
+const initializeParticles = (canvas) => {
+    let particles = [];
 
-for (let i = 0; i < 1000; i++) {
-    particles.push(createParticle());
-}
+    for (let i = 0; i < 5000; i++) {
+        particles.push(createParticle(canvas));
+    }
 
-ctx.strokeStyle = "#000000";
-ctx.lineWidth = 1;
+    return particles;
+};
 
-function animation() {
-    ctx.clearRect(0, 0, 5000, 5000);
+function animation(ctx, canvas, particles, buffer) {
+    buffer.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.beginPath();
-    ctx.fillStyle = "#ffffff";
-    ctx.ellipse(
+    buffer.beginPath();
+    buffer.fillStyle = "#ffffff";
+    buffer.ellipse(
         canvas.width / 2,
         canvas.height,
         canvas.width / 1.5,
@@ -137,30 +156,38 @@ function animation() {
         0,
         Math.PI * 2
     );
-    ctx.stroke();
-    ctx.fill();
+    buffer.stroke();
+    buffer.fill();
 
-    ctx.fillStyle = "#80ffdd";
+    buffer.fillStyle = "#80ffdd";
 
     const LENGTH = particles.length;
 
     for (let i = LENGTH - 1; i > -1; i--) {
-        ctx.beginPath();
+        buffer.beginPath();
 
-        ctx.arc(
-            particles[i].x,
-            particles[i].y,
-            i % 2 === 0 ? 1 : 2,
-            0,
-            Math.PI * 2
-        );
-        ctx.stroke();
-        ctx.fill();
+        if (
+            particles[i].x > 0 ||
+            particles[i].x < canvas.width ||
+            particles[i].y > 0 ||
+            particles[i].y < canvas.height
+        ) {
+            buffer.arc(
+                particles[i].x,
+                particles[i].y,
+                i % 2 === 0 ? 1 : 2,
+                0,
+                Math.PI * 2
+            );
+        }
+
+        buffer.stroke();
+        buffer.fill();
 
         checkIfInMouseRange(particles[i]);
 
         particles[i].y > canvas.height
-            ? (particles[i] = createParticle())
+            ? (particles[i] = createParticle(canvas))
             : (particles[i] = {
                   x:
                       particles[i].x +
@@ -179,8 +206,14 @@ function animation() {
                   celeration: particles[i].celeration,
               });
     }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(canvas.canvasBuffer, 0, 0);
 
-    requestAnimationFrame(animation);
+    setTimeout(() => {
+        requestAnimationFrame(() => {
+            animation(ctx, canvas, particles, buffer);
+        });
+    }, 1000 / 144);
 }
 
-animation();
+main();
