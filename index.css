@@ -7,6 +7,33 @@ body {
 }
 
 canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: inherit;
     height: inherit;
+    z-index: 2;
+}
+
+canvas:hover {
+    cursor: pointer;
+}
+
+svg {
+    position: absolute;
+    top: -23%;
+    left: 0%;
+    height: 120vh;
+    width: inherit;
+    stroke: black;
+    stroke-width: 1;
+    cursor: pointer;
+}
+
+.t-1 {
+    z-index: 3;
+}
+
+.t-2 {
+    z-index: 1;
 }

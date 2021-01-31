@@ -1,21 +1,55 @@
+import gsap from "gsap";
+
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
+const tree = document.querySelector(".tree");
+
+gsap.set(".tree, .tree-2", {
+    transformOrigin: "50% 100%",
+    rotate: -90,
+    scaleX: 0.05,
+    scale: 0.3,
+    y: 20,
+});
+
+gsap.set(".tree-2", { scaleX: 0.6, y: 200 });
+
+window.onload = () => {
+    gsap.to(".tree", {
+        delay: 3,
+        rotate: -3,
+        scaleX: 1,
+        scaleY: 0.9,
+        y: 0,
+        duration: 3,
+    });
+    gsap.to(".tree", { delay: 4, scaleY: 1, duration: 4 });
+
+    gsap.to(".tree-2", {
+        delay: 5,
+        rotate: 3,
+        scaleX: 0.7,
+        scaleY: 0.9,
+        y: 0,
+        duration: 3,
+    });
+    gsap.to(".tree-2", { delay: 7, scaleY: 0.9, duration: 4 });
+};
 
 let MousePos = [Infinity, Infinity];
 const DISPLACEMENT_FORCE_MAX = 2;
-canvas.addEventListener("mousemove", (e) => {
-    // console.log(MousePos);
+window.addEventListener("mousemove", (e) => {
+    console.log(MousePos);
     MousePos = [e.clientX, e.clientY];
 });
 
-bRect = canvas.getBoundingClientRect();
+const bRect = canvas.getBoundingClientRect();
 canvas.width = bRect.width;
 canvas.height = bRect.height;
 
 console.log(ctx);
 console.log(canvas.width);
 ctx.fillStyle = "#ffffff";
-ctx.fillRect(0, 0, 100, 300);
 
 function returnRandomWindValue() {
     const RAND = Math.random();
@@ -70,7 +104,7 @@ function rectifyCeleration(value, particle) {
 
         const changedValue =
             value < 0
-                ? -(Math.abs(value) - (0.5 / 200) * DISPLACEMENT_FORCE_MAX)
+                ? -(Math.abs(value) - (0.5 / 400) * DISPLACEMENT_FORCE_MAX)
                 : Math.abs(value) - (0.5 / 200) * DISPLACEMENT_FORCE_MAX;
 
         if (Math.abs(changedValue) < 1) particle.celeration = "NONE";
@@ -82,36 +116,35 @@ function rectifyCeleration(value, particle) {
 
 let particles = [];
 
-for (i = 0; i < 3000; i++) {
+for (let i = 0; i < 1000; i++) {
     particles.push(createParticle());
 }
 
-// function WindMap(particles) {
-//     let windMap = [];
-
-//     return function simulateWind(y, i) {
-//         if (y < 0) {
-//             windMap[i] = returnRandomWindValue();
-//         }
-
-//         const RAND = Math.random();
-
-//         if (RAND > 0.9999) {
-//             windMap[i] = returnRandomWindValue();
-//         }
-
-//         return windMap[i];
-//     };
-// }
+ctx.strokeStyle = "#000000";
+ctx.lineWidth = 1;
 
 function animation() {
     ctx.clearRect(0, 0, 5000, 5000);
 
-    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.fillStyle = "#ffffff";
+    ctx.ellipse(
+        canvas.width / 2,
+        canvas.height,
+        canvas.width / 1.5,
+        canvas.width / 16,
+        0,
+        0,
+        Math.PI * 2
+    );
+    ctx.stroke();
+    ctx.fill();
+
+    ctx.fillStyle = "#80ffdd";
 
     const LENGTH = particles.length;
 
-    for (i = LENGTH - 1; i > -1; i--) {
+    for (let i = LENGTH - 1; i > -1; i--) {
         ctx.beginPath();
 
         ctx.arc(
@@ -121,7 +154,7 @@ function animation() {
             0,
             Math.PI * 2
         );
-
+        ctx.stroke();
         ctx.fill();
 
         checkIfInMouseRange(particles[i]);
@@ -146,26 +179,6 @@ function animation() {
                   celeration: particles[i].celeration,
               });
     }
-
-    // particles = particles.map((particle, index) => {
-    //     ctx.beginPath();
-
-    //     ctx.arc(
-    //         particle.x,
-    //         particle.y,
-    //         index % 2 === 0 ? 1 : 2,
-    //         0,
-    //         Math.PI * 2
-    //     );
-    //     ctx.fill();
-
-    //     return particle.y > canvas.height
-    //         ? createParticle()
-    //         : {
-    //               x: (particle.x += simulateWind(particle.y, index)),
-    //               y: particle.y + 0.5,
-    //           };
-    // });
 
     requestAnimationFrame(animation);
 }

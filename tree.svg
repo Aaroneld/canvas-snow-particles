@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1554">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: red;
+      }
+
+      .cls-2 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <title>tree</title>
+  <g id="Layer_2" data-name="Layer 2">
+    <rect class="cls-1" y="314" width="1920" height="1080"/>
+  </g>
+  <g id="Layer_3" data-name="Layer 3">
+    <polygon class="cls-2" points="265 1554 352.49 1087 60 854 99 854 28.85 786 361.34 1019 431.1 541 258.86 434 296.86 434 235.44 373 439.32 486 456 408 550 0 547 431 534.13 684 730.36 572 697.09 617 734.77 614 539.07 731 527.83 938 849.96 806 809.74 842 849 854 531.03 1016 532 1547 265 1554"/>
+  </g>
+</svg>
