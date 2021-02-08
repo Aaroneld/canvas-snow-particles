@@ -2,12 +2,18 @@ import gsap from "gsap";
 
 const DISPLACEMENT_FORCE_MAX = 2;
 let MousePos = [Infinity, Infinity];
+let bRectIris = document
+    .querySelector("#iris-pupil")
+    .children[1].getBoundingClientRect();
+let center = [
+    bRectIris.x + bRectIris.width / 2,
+    bRectIris.y + bRectIris.height / 2,
+];
 
 function main() {
     const canvas = document.querySelector("canvas");
     const ctx = canvas.getContext("2d");
     const stage = document.querySelector("#stage");
-    const iris = document.querySelector("#iris-pupil").children[1];
 
     eyeEntrance();
 
@@ -16,32 +22,6 @@ function main() {
 
     stage.addEventListener("mousemove", (e) => {
         MousePos = [e.clientX, e.clientY];
-        const bRect = iris.getBoundingClientRect();
-        const center = [bRect.x + bRect.width / 2, bRect.y + bRect.height / 2];
-        const maxDistance = calculateDistance(
-            bRect.x + bRect.width / 2,
-            0,
-            bRect.y + bRect.height / 2,
-            0
-        );
-        const relPos = getRelativePosition(
-            MousePos[0],
-            center[0],
-            MousePos[1],
-            center[1]
-        );
-
-        const slope = calculateSlope(relPos[0], 0, relPos[1], 0);
-        const quadrant = determineQuadrant(relPos[0], relPos[1]);
-        const distancePercent = percentageOfMaxDistance(
-            calculateDistance(relPos[0], 0, relPos[1], 0),
-            maxDistance
-        );
-        const intersection = getIntersection(slope, quadrant);
-        mouseMoveAnimations(
-            intersection,
-            Math.abs(slope) > 2 ? 2 * (Math.abs(slope) / slope) : slope
-        );
     });
 
     setStage();
@@ -53,101 +33,47 @@ function main() {
 
     window.addEventListener("resize", () => {
         resize(canvas, stage);
+        bRectIris = document
+            .querySelector("#iris-pupil")
+            .children[1].getBoundingClientRect();
+        center = [
+            bRectIris.x + bRectIris.width / 2,
+            bRectIris.y + bRectIris.height / 2,
+        ];
     });
 
     animation(ctx, canvas, particles, buffer);
 }
 
-function calculateDistance(x1, x2, y1, y2) {
-    return Math.sqrt(Math.abs(x1 - x2 + (y1 - y2)));
+function calculateTranslationAmount(proportionalComponent, proportionFactor) {
+    return proportionalComponent * proportionFactor;
 }
 
-function calculateTranslationAmount(
-    proportionalComponent,
-    proportionFactor,
-    slopeMagnitude
-) {
-    let shim = 0;
-
-    // if (debug) {
-    //     // console.log(
-    //     //     proportionalComponent,
-    //     //     proportionFactor,
-    //     //     distanceFactor,
-    //     //     SIGNEDNESS,
-    //     //     distanceComponent
-    //     // );
-    //     // console.log(proportionalComponent * proportionFactor);
-    //     // console.log(intersection);
-    // }
-
-    if (slopeMagnitude && slopeMagnitude > 1) {
-        console.log(slopeMagnitude);
-        shim =
-            40 *
-            (slopeMagnitude * 0.3) *
-            (Math.abs(proportionalComponent) / proportionalComponent);
-    }
-
-    return proportionalComponent * proportionFactor + shim;
-}
-
-function mouseMoveAnimations(intersection, slope) {
+function mouseMoveAnimations(relPos) {
     gsap.to("#iris-shadow", {
-        x: calculateTranslationAmount(intersection[0], 150),
-        y: calculateTranslationAmount(intersection[1], 150, Math.abs(slope)),
+        x: calculateTranslationAmount(relPos[0], 0.1),
+        y: calculateTranslationAmount(relPos[1], 0.1),
 
         ease: "slow(0.7, 0.7, false)",
     });
     gsap.to("#reflection-1", {
-        x: calculateTranslationAmount(intersection[0], 20),
-        y: calculateTranslationAmount(intersection[1], 20),
+        x: calculateTranslationAmount(relPos[0], 0.005),
+        y: calculateTranslationAmount(relPos[1], 0.02),
         ease: "slow(0.7, 0.7, false)",
     });
     gsap.to("#reflection-2", {
-        x: calculateTranslationAmount(intersection[0], 20),
-        y: calculateTranslationAmount(intersection[1], 20),
+        x: calculateTranslationAmount(relPos[0], 0.005),
+        y: calculateTranslationAmount(relPos[1], 0.02),
         ease: "slow(0.7, 0.7, false)",
     });
     gsap.to("#eye-shadow", {
-        x: calculateTranslationAmount(intersection[0], 25),
-        y: calculateTranslationAmount(intersection[1], 25),
+        x: calculateTranslationAmount(relPos[0], 0.01),
+        y: calculateTranslationAmount(relPos[1], 0.01),
     });
-}
-
-function percentageOfMaxDistance(distance, maxDistance) {
-    return distance / maxDistance;
-}
-
-function calculateSlope(x1, x2, y1, y2) {
-    return x1 - x2 !== 0 ? (y1 - y2) / (x1 - x2) : "vert";
-}
-
-function determineQuadrant(x, y) {
-    if (x > 0 && y > 0) return 1;
-    if (x < 0 && y > 0) return 2;
-    if (x < 0 && y < 0) return 3;
-    if (x > 0 && y < 0) return 4;
 }
 
 function getRelativePosition(x1, x2, y1, y2) {
     return [x1 - x2, y1 - y2];
-}
-
-function getIntersection(slope, quadrant) {
-    slope = Math.abs(slope) > 2 ? 2 * (Math.abs(slope) / slope) : slope;
-    const x = 1 / (1 + slope ** 2);
-    const y = x * slope;
-    console.log(quadrant, slope);
-    if (slope > 0) {
-        return quadrant === 1
-            ? [Math.abs(x), Math.abs(y)]
-            : [-Math.abs(x), -Math.abs(y)];
-    } else {
-        return quadrant === 2
-            ? [-Math.abs(x), Math.abs(y)]
-            : [Math.abs(x), -Math.abs(y)];
-    }
 }
 
 const eyeEntrance = () => {
@@ -364,6 +290,17 @@ function animation(ctx, canvas, particles, buffer) {
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(canvas.canvasBuffer, 0, 0);
+
+    if (MousePos[0] < Infinity) {
+        const relPos = getRelativePosition(
+            MousePos[0],
+            center[0],
+            MousePos[1],
+            center[1]
+        );
+
+        mouseMoveAnimations(relPos);
+    }
 
     setTimeout(() => {
         requestAnimationFrame(() => {
