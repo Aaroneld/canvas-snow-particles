@@ -5717,17 +5717,9 @@ var eyeEntrance = function eyeEntrance() {
     ease: "back.out(.1)"
   });
 
-  function toggleValue() {
-    var value = -20;
-    return function () {
-      value *= -1;
-      return value;
-    };
-  }
-
   _gsap.default.to("#eye-open", {
     delay: 13,
-    duration: 4,
+    duration: 2,
     y: 5,
     repeat: -1,
     ease: "back.inOut(6)",
@@ -5935,7 +5927,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52608" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59709" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

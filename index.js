@@ -159,18 +159,9 @@ const eyeEntrance = () => {
         ease: "back.out(.1)",
     });
 
-    function toggleValue() {
-        let value = -20;
-
-        return () => {
-            value *= -1;
-            return value;
-        };
-    }
-
     gsap.to("#eye-open", {
         delay: 13,
-        duration: 4,
+        duration: 2,
         y: 5,
         repeat: -1,
         ease: "back.inOut(6)",
