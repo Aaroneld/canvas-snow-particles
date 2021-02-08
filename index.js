@@ -6,12 +6,42 @@ let MousePos = [Infinity, Infinity];
 function main() {
     const canvas = document.querySelector("canvas");
     const ctx = canvas.getContext("2d");
+    const stage = document.querySelector("#stage");
+    const iris = document.querySelector("#iris-pupil").children[1];
+
+    eyeEntrance();
 
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
 
-    window.addEventListener("mousemove", (e) => {
+    stage.addEventListener("mousemove", (e) => {
         MousePos = [e.clientX, e.clientY];
+        const bRect = iris.getBoundingClientRect();
+        const center = [bRect.x + bRect.width / 2, bRect.y + bRect.height / 2];
+        const maxDistance = calculateDistance(
+            bRect.x + bRect.width / 2,
+            0,
+            bRect.y + bRect.height / 2,
+            0
+        );
+        const relPos = getRelativePosition(
+            MousePos[0],
+            center[0],
+            MousePos[1],
+            center[1]
+        );
+
+        const slope = calculateSlope(relPos[0], 0, relPos[1], 0);
+        const quadrant = determineQuadrant(relPos[0], relPos[1]);
+        const distancePercent = percentageOfMaxDistance(
+            calculateDistance(relPos[0], 0, relPos[1], 0),
+            maxDistance
+        );
+        const intersection = getIntersection(slope, quadrant);
+        mouseMoveAnimations(
+            intersection,
+            Math.abs(slope) > 2 ? 2 * (Math.abs(slope) / slope) : slope
+        );
     });
 
     setStage();
@@ -19,8 +49,136 @@ function main() {
     const buffer = createCanvasBuffer(canvas);
     let particles = initializeParticles(canvas);
 
+    resize(canvas, stage);
+
+    window.addEventListener("resize", () => {
+        resize(canvas, stage);
+    });
+
     animation(ctx, canvas, particles, buffer);
 }
+
+function calculateDistance(x1, x2, y1, y2) {
+    return Math.sqrt(Math.abs(x1 - x2 + (y1 - y2)));
+}
+
+function calculateTranslationAmount(
+    proportionalComponent,
+    proportionFactor,
+    slopeMagnitude
+) {
+    let shim = 0;
+
+    // if (debug) {
+    //     // console.log(
+    //     //     proportionalComponent,
+    //     //     proportionFactor,
+    //     //     distanceFactor,
+    //     //     SIGNEDNESS,
+    //     //     distanceComponent
+    //     // );
+    //     // console.log(proportionalComponent * proportionFactor);
+    //     // console.log(intersection);
+    // }
+
+    if (slopeMagnitude && slopeMagnitude > 1) {
+        console.log(slopeMagnitude);
+        shim =
+            40 *
+            (slopeMagnitude * 0.3) *
+            (Math.abs(proportionalComponent) / proportionalComponent);
+    }
+
+    return proportionalComponent * proportionFactor + shim;
+}
+
+function mouseMoveAnimations(intersection, slope) {
+    gsap.to("#iris-shadow", {
+        x: calculateTranslationAmount(intersection[0], 150),
+        y: calculateTranslationAmount(intersection[1], 150, Math.abs(slope)),
+
+        ease: "slow(0.7, 0.7, false)",
+    });
+    gsap.to("#reflection-1", {
+        x: calculateTranslationAmount(intersection[0], 20),
+        y: calculateTranslationAmount(intersection[1], 20),
+        ease: "slow(0.7, 0.7, false)",
+    });
+    gsap.to("#reflection-2", {
+        x: calculateTranslationAmount(intersection[0], 20),
+        y: calculateTranslationAmount(intersection[1], 20),
+        ease: "slow(0.7, 0.7, false)",
+    });
+    gsap.to("#eye-shadow", {
+        x: calculateTranslationAmount(intersection[0], 25),
+        y: calculateTranslationAmount(intersection[1], 25),
+    });
+}
+
+function percentageOfMaxDistance(distance, maxDistance) {
+    return distance / maxDistance;
+}
+
+function calculateSlope(x1, x2, y1, y2) {
+    return x1 - x2 !== 0 ? (y1 - y2) / (x1 - x2) : "vert";
+}
+
+function determineQuadrant(x, y) {
+    if (x > 0 && y > 0) return 1;
+    if (x < 0 && y > 0) return 2;
+    if (x < 0 && y < 0) return 3;
+    if (x > 0 && y < 0) return 4;
+}
+
+function getRelativePosition(x1, x2, y1, y2) {
+    return [x1 - x2, y1 - y2];
+}
+
+function getIntersection(slope, quadrant) {
+    slope = Math.abs(slope) > 2 ? 2 * (Math.abs(slope) / slope) : slope;
+    const x = 1 / (1 + slope ** 2);
+    const y = x * slope;
+    console.log(quadrant, slope);
+    if (slope > 0) {
+        return quadrant === 1
+            ? [Math.abs(x), Math.abs(y)]
+            : [-Math.abs(x), -Math.abs(y)];
+    } else {
+        return quadrant === 2
+            ? [-Math.abs(x), Math.abs(y)]
+            : [Math.abs(x), -Math.abs(y)];
+    }
+}
+
+const eyeEntrance = () => {
+    gsap.set("#eye-open", { y: "-50%" });
+    gsap.to("#eye-open", {
+        delay: 8,
+        y: 0,
+        duration: 5,
+        ease: "back.out(.1)",
+    });
+
+    function toggleValue() {
+        let value = -20;
+
+        return () => {
+            value *= -1;
+            return value;
+        };
+    }
+
+    gsap.to("#eye-open", {
+        delay: 13,
+        duration: 4,
+        y: 5,
+        repeat: -1,
+        ease: "back.inOut(6)",
+        yoyoEase: "slow(0.7, 0.7, false)",
+        yoyo: true,
+        repeatRefresh: true,
+    });
+};
 
 const createCanvasBuffer = (canvas) => {
     canvas.canvasBuffer = document.createElement("canvas");
@@ -61,6 +219,13 @@ const setStage = () => {
         });
         gsap.to(".tree-2", { delay: 7, scaleY: 0.9, duration: 4 });
     };
+};
+
+const resize = (canvas, stage) => {
+    canvas.width = canvas.canvasBuffer.width = window.innerWidth;
+    canvas.height = canvas.canvasBuffer.height = window.innerWidth * 0.5625;
+    stage.style.height = `${window.innerWidth * 0.5625}px`;
+    stage.style.width = `${window.innerWidth}px`;
 };
 
 const setSize = (canvas) => {
@@ -151,7 +316,7 @@ function animation(ctx, canvas, particles, buffer) {
         canvas.width / 2,
         canvas.height,
         canvas.width / 1.5,
-        canvas.width / 16,
+        canvas.width / 12,
         0,
         0,
         Math.PI * 2
@@ -213,7 +378,7 @@ function animation(ctx, canvas, particles, buffer) {
         requestAnimationFrame(() => {
             animation(ctx, canvas, particles, buffer);
         });
-    }, 1000 / 144);
+    }, 1000 / 60);
 }
 
 main();

@@ -7,8 +7,59 @@ body {
 }
 
 canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: inherit;
     height: inherit;
+    z-index: 2;
+}
+
+canvas:hover {
+    cursor: pointer;
+}
+
+svg {
+    position: absolute;
+    top: -23%;
+    left: 0%;
+    height: 120%;
+    width: inherit;
+    stroke: black;
+    stroke-width: 1;
+    cursor: pointer;
+}
+
+.tree-group {
+    transform: scaleX(0.7);
+}
+
+.t-1 {
+    z-index: 3;
+    position: relative;
+    left: 5%;
+    top: -150%;
+}
+
+.t-2 {
+    z-index: 1;
+    position: relative;
+    left: 45%;
+}
+
+#stage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: inherit;
+    height: inherit;
+}
+
+#eye-open {
+    width: 15%;
+    margin-left: 45%;
+    margin-top: -10%;
+    z-index: 4;
 }
 
 
